@@ -1,0 +1,134 @@
+#!/bin/bash
+
+#######################################################################
+#
+# Copyright (C) 2018 Miguel Jacq <mig@mig5.net>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+#######################################################################
+
+URL=
+KEYWORD=
+RETRY=3
+TIMESLEEP=5
+VERBOSE=1
+SILENT=0
+CRON=0
+OUTPUT=0
+
+usage()
+{
+cat << EOF
+usage: $0 ARGUMENTS
+
+This script checks a site to make sure it's online.
+
+ARGUMENTS:
+  -u    URL of the site to check
+  -k    Key word on the page to look for
+  -r    Amount of retries before alerting (default: 3)
+  -t    Time to wait in between retries (default: 5)
+  -s    Silent mode (you can check the return code for success/failure)
+  -c    Cron mode (only errors get output)
+  -h	This help message.
+EOF
+}
+
+log () {
+  # Always output if verbosity is on
+  if [ $VERBOSE -eq 1 ]; then
+    OUTPUT=1
+  fi
+  # Was this an error and we are using cron mode? If so, still output
+  if [[ "$@" == *"CRITICAL"* ]] && [ $CRON -eq 1 ]; then
+    OUTPUT=1
+  fi
+
+  if [ $OUTPUT -eq 1 ]; then
+    echo "$@"
+  fi
+}
+
+# Parse the args
+while getopts ":u:k:r:t:sch" OPTION
+do
+  case $OPTION in
+    h)
+      usage
+      exit
+      ;;
+    u)
+      URL=$OPTARG
+      ;;
+    k)
+      KEYWORD=$OPTARG
+      ;;
+    r)
+      RETRY=$OPTARG
+      ;;
+    t)
+      TIMESLEEP=$OPTARG
+      ;;
+    s)
+      SILENT=1
+      ;;
+    c)
+      CRON=1
+      ;;
+    ?)
+      usage
+      exit
+      ;;
+  esac
+done
+
+# Sanity checks
+for prog in curl grep; do
+  which $prog > /dev/null || ( echo "You need ${prog} installed or in your PATH" && exit 1 )
+done
+
+# Check for missing arguments
+if [ -z "${URL}" ]; then
+  usage
+  exit 1
+fi
+
+# Silence verbosity if silent mode enabled
+if [ "${SILENT}" -eq 1 ] || [ "${CRON}" -eq 1 ]; then
+  VERBOSE=0
+fi
+
+# Run the check, and retry for amount of times requested
+COUNT=1
+while [ "${COUNT}" -le "${RETRY}" ]; do
+  log "Attempt #${COUNT} to check ${URL} for ${KEYWORD}"
+  ((COUNT++))
+  curl -s "${URL}" | grep "${KEYWORD}" > /dev/null
+  if [ $? -eq 0 ]; then
+    log "OK - found ${KEYWORD} on ${URL}"
+    SUCCESS=0
+    break;
+  else
+    log "CRITICAL - couldn't find ${KEYWORD} on ${URL}"
+    SUCCESS=1
+    sleep "${TIMESLEEP}"
+  fi
+done
+
+if [ ${SUCCESS} -eq 0 ]; then
+  exit 0
+else
+  exit 1
+fi
