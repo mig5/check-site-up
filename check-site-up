@@ -121,7 +121,6 @@ while [ "${COUNT}" -le "${RETRY}" ]; do
     SUCCESS=0
     break;
   else
-    log "CRITICAL - couldn't find ${KEYWORD} on ${URL}"
     SUCCESS=1
     sleep "${TIMESLEEP}"
   fi
@@ -130,5 +129,6 @@ done
 if [ ${SUCCESS} -eq 0 ]; then
   exit 0
 else
+  log "CRITICAL - couldn't find ${KEYWORD} on ${URL}"
   exit 1
 fi
