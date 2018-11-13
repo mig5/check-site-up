@@ -74,5 +74,5 @@ OK - found Sysadmin on http://yvhz3ofkv7gwf5hpzqvhonpr3gbax2cc7dee3xcnt7dmtlx2gu
 
 ```
 MAILTO="you@example.com"
-*/15 * * * * www-data /usr/bin/torify /usr/local/bin/check-site-up -u http://yvhz3ofkv7gwf5hpzqvhonpr3gbax2cc7dee3xcnt7dmtlx2gu7vyvid.onion/ -k Sysadmin -c
+*/15 * * * * www-data /usr/bin/torify /usr/local/bin/check-site-up -u http://yvhz3ofkv7gwf5hpzqvhonpr3gbax2cc7dee3xcnt7dmtlx2gu7vyvid.onion/ -k Sysadmin -c 2> /dev/null
 ```
