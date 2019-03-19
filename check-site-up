@@ -115,7 +115,7 @@ COUNT=1
 while [ "${COUNT}" -le "${RETRY}" ]; do
   log "Attempt #${COUNT} to check ${URL} for ${KEYWORD}"
   ((COUNT++))
-  curl -s "${URL}" | grep "${KEYWORD}" > /dev/null
+  timeout --kill-after=60 60 curl -s "${URL}" | grep "${KEYWORD}" > /dev/null
   if [ $? -eq 0 ]; then
     log "OK - found ${KEYWORD} on ${URL}"
     SUCCESS=0
